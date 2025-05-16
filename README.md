@@ -63,23 +63,6 @@ auto_yt_scraper/
 └── db.sqlite3         # SQLite 데이터베이스
 ```
 
-## API 엔드포인트
+## API 명세서
 
-- `/api/crawl/shorts/task` -2분 주기 크롤링 작업 시작
-
-request:
-```json
-{
-    "urls": [
-        "https://www.youtube.com/@%EC%9C%A0%ED%8A%9C%EB%B8%8C%EC%88%98%EC%9D%B5%ED%99%94%EB%B8%8C%EB%9E%9C%EB%94%A9/shorts",
-        "https://www.youtube.com/@%EC%9C%A0%ED%8A%9C%EB%B8%8C%EC%88%98%EC%9D%B5%ED%99%94%EB%B8%8C%EB%9E%9C%EB%94%A9/shorts"
-    ]
-}
-```
-
-response:
-```json
-{
-    "message": "success"
-}
-```
+[API 명세서](https://www.notion.so/API-1f5618b2be8b802ba951c8af6c0a1876?pvs=4)

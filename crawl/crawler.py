@@ -146,19 +146,30 @@ def get_shorts_urls(url):
     finally:
         driver.close()
 
-
+# 추출일과 누적집계일 설정
 current_time = datetime.now().strftime("%Y-%m-%d")
 stack_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
+# 채널 내 모든 Shorts 영상 정보 추출
 def get_info(urls):
+    # 추출 데이터 저장 리스트
     data = []
 
+    # 각 채널에 대해 반복
     for url in urls:
+        # 채널 정보 추출
+        channel_name, subscribers = get_channel_info(url)
+        
+        # Shorts 영상 링크 추출
+        shorts_urls = get_shorts_urls(url)
+        
         channel_name, subscribers = get_channel_info(url)
         shorts_urls = get_shorts_urls(url)
 
+        # 각 Shorts 영상에 대해 반복
         for shorts_url in shorts_urls:
             try:
+                # 영상 상세정보 추출
                 title, views, upload_date = get_views_and_upload_date(shorts_url)
                 data.append({
                     "누적집계일" : stack_time,
@@ -171,6 +182,7 @@ def get_info(urls):
                     "구독자 수": subscribers
                 })
                 print(f'{title} 완료')
+                
             except Exception :
                 print(f"[에러] {shorts_url} 처리 중 크롤링 문제 발생")
                 for i in range(3):
