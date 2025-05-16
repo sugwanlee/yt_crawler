@@ -65,7 +65,7 @@ auto_yt_scraper/
 
 ## API 엔드포인트
 
-- `/api/crawl/shorts/` - 크롤링 작업 시작
+- `/api/crawl/shorts/task` -2분 주기 크롤링 작업 시작
 
 request:
 ```json
