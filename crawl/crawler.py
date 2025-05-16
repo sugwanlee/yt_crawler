@@ -18,13 +18,18 @@ options.add_argument("--disable-gpu")
 options.add_argument("--headless=new")
 options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
 
-
+# 조회수와 업로드 날짜 추출
 def get_views_and_upload_date(url):
+    # 웹 드라이버 초기화
     driver = webdriver.Chrome(options=options)
+
+    # 웹 페이지 로드 대기
     wait = WebDriverWait(driver, 10)
 
+    # 웹 페이지 로드
     driver.get(url)
     
+    # 영상 상세정보 클릭
     search_box = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "yt-shorts-video-title-view-model.ytShortsVideoTitleViewModelHostClickable")))
     search_box.click()
     
@@ -92,32 +97,44 @@ def get_channel_info(url):
     driver.close()
     return channel_name, subscribers
 
-
+# 채널 내 모든 Shorts 영상 링크 추출
 def get_shorts_urls(url):
+    # 웹 드라이버 초기화
     driver = webdriver.Chrome(options=options)
     wait = WebDriverWait(driver, 10)
 
     try:
+        # 채널 페이지 로드
         driver.get(url)
         
+        # 스크롤 일시정지 시간
         SCROLL_PAUSE_TIME = 2
+
+        # Shorts 영상 링크 저장 집합
         shorts_urls = set()
 
+        # 스크롤 높이
         last_height = driver.execute_script("return document.documentElement.scrollHeight")
 
         while True:
+            # 스크롤 내리기
             driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+
+            # 페이지 로드 완료 대기
             WebDriverWait(driver, SCROLL_PAUSE_TIME).until(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
 
+            # Shorts 영상 링크 추출 
             elements = driver.find_elements(By.XPATH, "//*[@id='content']/ytm-shorts-lockup-view-model-v2/ytm-shorts-lockup-view-model/a")
             for element in elements:
                 shorts_urls.add(element.get_attribute("href"))
 
+            # 스크롤 높이 업데이트
             new_height = driver.execute_script("return document.documentElement.scrollHeight")
             print(f"현재 수집된 Shorts 개수: {len(shorts_urls)}")
 
+            # 스크롤 높이가 변경되지 않았으면 종료
             if new_height == last_height:
                 WebDriverWait(driver, SCROLL_PAUSE_TIME).until(
                     lambda d: d.execute_script("return document.documentElement.scrollHeight") == new_height
@@ -130,7 +147,7 @@ def get_shorts_urls(url):
         driver.close()
 
 
-this_time = datetime.now().strftime("%Y-%m-%d")
+current_time = datetime.now().strftime("%Y-%m-%d")
 stack_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
 def get_info(urls):
@@ -145,7 +162,7 @@ def get_info(urls):
                 title, views, upload_date = get_views_and_upload_date(shorts_url)
                 data.append({
                     "누적집계일" : stack_time,
-                    "추출일": this_time,
+                    "추출일": current_time,
                     "채널명": channel_name,
                     "영상 제목": title,
                     "영상 링크": shorts_url,
@@ -161,7 +178,7 @@ def get_info(urls):
                         title, views, upload_date = get_views_and_upload_date(shorts_url)
                         data.append({
                             "누적집계일" : stack_time,
-                            "추출일": this_time,
+                            "추출일": current_time,
                             "채널명": channel_name,
                             "영상 제목": title,
                             "영상 링크": shorts_url,

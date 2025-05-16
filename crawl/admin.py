@@ -1,5 +1,9 @@
 from django.contrib import admin
 from .models import Shorts
+
+# background_task의 Task 모델 import
+from background_task.models import Task
+
 # Register your models here.
 
 @admin.register(Shorts)
