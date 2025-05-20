@@ -1,9 +1,9 @@
-from background_task import background
+from celery import shared_task
 from .crawler import get_info
 from .models import Shorts
 
 
-@background(schedule=0)
+@shared_task
 def crawl_shorts(urls):
     try:
         data = get_info(urls)

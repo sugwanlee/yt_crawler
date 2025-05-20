@@ -42,8 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # third party apps
-    'background_task',
     'rest_framework',
+    'django_celery_beat',
+    'django_celery_results',
     # local apps
     'crawl',
 ]
@@ -124,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
@@ -142,3 +143,13 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MAX_ATTEMPTS = 2
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis 브로커 URL
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # 결과 백엔드
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+CELERY_RESULT_BACKEND = 'django-db'
