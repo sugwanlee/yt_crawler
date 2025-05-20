@@ -6,6 +6,8 @@ from .tasks import crawl_shorts
 from rest_framework import status
 from .serializers import ShortsSerializer, PeriodicTaskSerializer
 from .models import Shorts
+from celery.result import AsyncResult
+from celery import current_app  
 import time
 import json
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
@@ -38,8 +40,8 @@ class CrawlShorts(APIView):
 
             # CrontabSchedule 생성 또는 가져오기 (매일 오전 3시 16분)
             schedule, created = CrontabSchedule.objects.get_or_create(
-                minute='56',
-                hour='6',
+                minute='43',
+                hour='8',
                 day_of_week='*',
                 day_of_month='*',
                 month_of_year='*',
@@ -63,10 +65,6 @@ class CrawlShorts(APIView):
             return Response({"message": "모든 크롤링 작업 취소"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-
-from celery.result import AsyncResult
-from celery import current_app
 
 class TaskDetailStatus(APIView):
     def get(self, request):
