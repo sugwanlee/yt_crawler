@@ -157,14 +157,20 @@ def get_info(urls):
 
     # 각 채널에 대해 반복
     for url in urls:
+        url = f'{url}/shorts/'
         # 채널 정보 추출
-        channel_name, subscribers = get_channel_info(url)
-        
-        # Shorts 영상 링크 추출
-        shorts_urls = get_shorts_urls(url)
-        
-        channel_name, subscribers = get_channel_info(url)
-        shorts_urls = get_shorts_urls(url)
+        try:
+            channel_name, subscribers = get_channel_info(url)
+            
+            # Shorts 영상 링크 추출
+            shorts_urls = get_shorts_urls(url)
+            
+            channel_name, subscribers = get_channel_info(url)
+            shorts_urls = get_shorts_urls(url)
+        except Exception as e:
+            print(f'작업실패 : {e}')
+            raise
+
 
         # 각 Shorts 영상에 대해 반복
         for shorts_url in shorts_urls:

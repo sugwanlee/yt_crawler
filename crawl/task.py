@@ -3,9 +3,13 @@ from .crawler import get_info
 from .models import Shorts
 
 
-@background(schedule=30)
+@background(schedule=0)
 def crawl_shorts(urls):
-    data = get_info(urls)
+    try:
+        data = get_info(urls)
+    except Exception as e:
+        print(e)
+        raise
     print(f"작업 시작 : {urls}")
     for item in data:
         Shorts.objects.create(

@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # '/api/v1/crawl/' 로 들어오면 crawl 앱의 urls.py로 전달
     path('api/v1/crawl/', include('crawl.urls')),
 ]
