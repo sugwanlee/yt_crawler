@@ -25,20 +25,29 @@ class CrawlShorts(APIView):
     수집하는 항목 : 각 영상 당; 채널명, 영상 제목, 영상 링크, 업로드일, 조회수, 구독자 수
     """
 
+    # 등록된 작업 조회 method
     def get(self, request):
         try:
+            # ORM으로 작업 조회
             tasks = PeriodicTask.objects.all()
+            # 시리얼라이저로 직렬화
             serializer = PeriodicTaskSerializer(tasks, many=True)
+            # 응답 반환
             return Response({"message": "모든 크롤링 작업 조회", "tasks": serializer.data}, status=status.HTTP_200_OK)
+        # 에러 발생 시 예외 처리
         except Exception as e:
+            # 에러 반환
             return Response({"message": "작업 조회 실패", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    # 작업 등록 method
     def post(self, request):
         try:
+            # body에서 urls 가져오기
             urls = request.data.get("urls")
+            # body에서 task_name 가져오기
             task_name = request.data.get("task_name")
 
-            # CrontabSchedule 생성 또는 가져오기 (매일 오전 3시 16분)
+            # 작업 주기 설정 (매일 오전 n시 m분) 
             schedule, created = CrontabSchedule.objects.get_or_create(
                 minute='25',
                 hour='2',
@@ -47,18 +56,19 @@ class CrawlShorts(APIView):
                 month_of_year='*',
             )
 
-            # PeriodicTask 생성
+            # 작업 등록
             PeriodicTask.objects.create(
-                crontab=schedule,  # interval 대신 crontab 사용
+                crontab=schedule,
                 name=task_name,
-                task='crawl.tasks.crawl_shorts',
+                task='crawl.tasks.crawl_shorts',        # 실행될 함수
                 args=json.dumps([urls, task_name]),
             )
-
+            # 응답 반환
             return Response({"message": "주기적인 크롤링 작업이 등록되었습니다."}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
+    # 작업 등록 취소 method
     def delete(self, request):
         try:
             PeriodicTask.objects.all().delete()
@@ -66,6 +76,7 @@ class CrawlShorts(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+# 미사용 api
 class TaskDetailStatus(APIView):
     def get(self, request):
         try:
@@ -81,20 +92,32 @@ class TaskDetailStatus(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        
+# 쇼츠 정보 api
 class ShortsData(APIView):
+
+    # 모든 쇼츠 정보 조회
     def get(self, request):
         try:
+            # ORM으로 모든 쇼츠 정보 조회
             shorts = Shorts.objects.all()
+            # 시리얼라이저로 직렬화
             serializer = ShortsSerializer(shorts, many=True)
+            # 응답 반환
             return Response({"message" : "수집된 쇼츠 정보들 조회 완료", "data" : serializer.data}, status=status.HTTP_200_OK)
+        # 에러 발생 시 예외 처리
         except Exception as e:
+            # 에러 반환
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+    # 모든 쇼츠 정보 삭제
     def delete(self, request):
         try:
+            # ORM으로 모든 쇼츠 정보 조회
             Shorts.objects.all().delete()
+            # 시리얼라이저로 직렬화
             return Response({"message": "수집된 모든 쇼츠 정보 삭제"}, status=status.HTTP_200_OK)
+        # 에러 발생 시 예외 처리
         except Exception as e:
+            # 에러 반환
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
