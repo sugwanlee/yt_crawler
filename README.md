@@ -2,6 +2,10 @@
 
 YouTube 데이터를 자동으로 수집하는 Django 기반 웹 애플리케이션입니다.
 
+## 프로젝트 문서
+
+프로젝트 상세 문서는 [여기](https://www.notion.so/1fa618b2be8b80a0b003f4c312269120?pvs=4)에서 확인할 수 있습니다.
+
 ## 기능
 
 - YouTube 동영상 데이터 자동 수집
@@ -62,7 +66,3 @@ auto_yt_scraper/
 ├── requirements.txt   # 의존성 패키지
 └── db.sqlite3         # SQLite 데이터베이스
 ```
-
-## API 명세서
-
-[API 명세서](https://www.notion.so/API-1f5618b2be8b802ba951c8af6c0a1876?pvs=4)
