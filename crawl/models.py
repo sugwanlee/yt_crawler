@@ -8,7 +8,7 @@ class Shorts(models.Model):
     channel_name = models.CharField(max_length=200)
     video_title = models.CharField(max_length=200)
     video_url = models.URLField()
-    upload_date = models.DateTimeField()
+    upload_date = models.DateField()
     video_views = models.IntegerField()
     subscriber_count = models.IntegerField()
 
