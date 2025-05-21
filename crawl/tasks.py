@@ -1,9 +1,13 @@
 from celery import shared_task
 from .crawler import get_info
 from .models import Shorts
+from dotenv import load_dotenv
 import requests
+import os
 
-SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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"
+load_dotenv()
+
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
 def send_slack_message(text):
     payload = {"text": text}
@@ -16,7 +20,7 @@ def send_slack_message(text):
 
 
 @shared_task
-def crawl_shorts(urls):
+def crawl_shorts(urls, task_name):
     try:
         data = get_info(urls)
         print(f"작업 시작 : {urls}")
@@ -31,8 +35,8 @@ def crawl_shorts(urls):
                 subscriber_count = item["구독자 수"]
             )
         print(f"작업 완료 : {urls}")
-        send_slack_message(f"✅ 작업 성공!")
+        send_slack_message(f"{task_name} 작업 성공!")
     except Exception as e:
         print(e)
-        send_slack_message(f"❌ 작업 실패! 에러: {str(e)}")
+        send_slack_message(f"{task_name} 작업 실패! 에러: {str(e)}")
         raise

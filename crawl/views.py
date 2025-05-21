@@ -40,8 +40,8 @@ class CrawlShorts(APIView):
 
             # CrontabSchedule 생성 또는 가져오기 (매일 오전 3시 16분)
             schedule, created = CrontabSchedule.objects.get_or_create(
-                minute='43',
-                hour='8',
+                minute='25',
+                hour='2',
                 day_of_week='*',
                 day_of_month='*',
                 month_of_year='*',
@@ -52,7 +52,7 @@ class CrawlShorts(APIView):
                 crontab=schedule,  # interval 대신 crontab 사용
                 name=task_name,
                 task='crawl.tasks.crawl_shorts',
-                args=json.dumps([urls]),
+                args=json.dumps([urls, task_name]),
             )
 
             return Response({"message": "주기적인 크롤링 작업이 등록되었습니다."}, status=status.HTTP_201_CREATED)
