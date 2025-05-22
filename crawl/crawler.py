@@ -24,6 +24,9 @@ options.add_argument('--lang=ko_KR')  # 한국어 환경 설정
 options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36')
 options.add_argument('--accept-language=ko-KR,ko;q=0.9')
 
+options.binary_location = "/usr/bin/google-chrome"
+
+
 # 조회수와 업로드 날짜 추출
 def get_views_and_upload_date(url):
     # 웹 드라이버 초기화
@@ -158,6 +161,8 @@ stack_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
 
 # 채널 내 모든 Shorts 영상 정보 추출
 def get_info(urls):
+
+    
     # 추출 데이터 저장 리스트
     data = []
 
