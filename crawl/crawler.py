@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 # 크롬 옵션 설정
 options = Options()
 
+options.binary_location = "/usr/bin/google-chrome"
 # 일반 크롤링 방지 우회 옵션
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_argument("--disable-infobars")
