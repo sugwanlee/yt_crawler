@@ -11,26 +11,20 @@ from bs4 import BeautifulSoup
 # 크롬 옵션 설정
 options = Options()
 
-options.binary_location = "/usr/bin/google-chrome"
-# 일반 크롤링 방지 우회 옵션
+options = Options()
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_argument("--disable-infobars")
 options.add_argument("--disable-extensions")
 options.add_argument("--start-maximized")
 options.add_argument("--disable-gpu")
-options.add_argument("--no-sandbox")             # ✅ EC2에서 필수
-options.add_argument("--disable-dev-shm-usage")  # ✅ 메모리 공유 공간 제한 해결
-options.add_argument("--headless=new")           # ✅ 최신 버전에서 headless 실행
-options.add_argument('--lang=ko_KR')  # 한국어 환경 설정
-options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36')
-options.add_argument('--accept-language=ko-KR,ko;q=0.9')
-
+options.add_argument("--headless=new")
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
 
 
 # 조회수와 업로드 날짜 추출
 def get_views_and_upload_date(url):
     # 웹 드라이버 초기화
-    driver = webdriver.Chrome(options=options, executable_path='/usr/bin/chromedriver')
+    driver = webdriver.Chrome(options=options)
 
     # 웹 페이지 로드 대기
     wait = WebDriverWait(driver, 10)
@@ -81,7 +75,7 @@ def get_views_and_upload_date(url):
 
 
 def get_channel_info(url):
-    driver = webdriver.Chrome(options=options, executable_path='/usr/bin/chromedriver')
+    driver = webdriver.Chrome(options=options)
     wait = WebDriverWait(driver, 10)
 
     driver.get(url)
@@ -109,7 +103,7 @@ def get_channel_info(url):
 # 채널 내 모든 Shorts 영상 링크 추출
 def get_shorts_urls(url):
     # 웹 드라이버 초기화
-    driver = webdriver.Chrome(options=options, executable_path='/usr/bin/chromedriver')
+    driver = webdriver.Chrome(options=options)
     wait = WebDriverWait(driver, 10)
 
     try:
