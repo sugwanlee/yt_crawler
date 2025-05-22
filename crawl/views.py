@@ -46,11 +46,13 @@ class CrawlShorts(APIView):
             urls = request.data.get("urls")
             # body에서 task_name 가져오기
             task_name = request.data.get("task_name")
+            minute = request.data.get("minute")
+            hour = request.data.get("hour")
 
             # 작업 주기 설정 (매일 오전 n시 m분) 
             schedule, created = CrontabSchedule.objects.get_or_create(
-                minute='25',
-                hour='2',
+                minute=minute,
+                hour=hour,
                 day_of_week='*',
                 day_of_month='*',
                 month_of_year='*',
