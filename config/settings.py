@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '43.203.249.215',
+    '13.124.80.23',
     'localhost',
     '127.0.0.1',
 ]
