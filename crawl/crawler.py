@@ -20,6 +20,7 @@ options.add_argument("--disable-gpu")
 options.add_argument("--no-sandbox")             # ✅ EC2에서 필수
 options.add_argument("--disable-dev-shm-usage")  # ✅ 메모리 공유 공간 제한 해결
 options.add_argument("--headless=new")           # ✅ 최신 버전에서 headless 실행
+options.add_argument('--lang=ko_KR')  # 한국어 환경 설정
 options.add_argument(
     "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 )
