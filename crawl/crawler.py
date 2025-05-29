@@ -6,11 +6,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from datetime import datetime, timedelta
+from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
-# 크롬 옵션 설정
-options = Options()
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
+import time
+import re
 
+# 크롬 옵션 설정
 options = Options()
 options.add_argument("--disable-blink-features=AutomationControlled")
 options.add_argument("--disable-infobars")
@@ -18,172 +22,199 @@ options.add_argument("--disable-extensions")
 options.add_argument("--start-maximized")
 options.add_argument("--disable-gpu")
 options.add_argument("--headless=new")
+options.add_argument("--log-level=3")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--lang=ko-KR")  # 한국어 설정
 options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+options.add_experimental_option("prefs", {
+    "intl.accept_languages": "ko,ko-KR"
+})
+def get_driver():
+    service = Service('/usr/bin/chromedriver')
+    return webdriver.Chrome(service=service, options=options)
 
-# 조회수와 업로드 날짜 추출
-def get_views_and_upload_date(url):
-    # 웹 드라이버 초기화
-    driver = webdriver.Chrome(options=options)
+def get_views_and_upload_date(url, max_retries=10):
+    attempt = 0
+    while attempt < max_retries:
+        driver = get_driver()
+        wait = WebDriverWait(driver, 10)
+        try:
+            driver.get(url)
 
-    # 웹 페이지 로드 대기
-    wait = WebDriverWait(driver, 10)
+            # 클릭하기 전에 제목 가져오기
+            title_elem = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "ytShortsVideoTitleViewModelShortsVideoTitle")))
 
-    # 웹 페이지 로드
-    driver.get(url)
-    
-    # 영상 상세정보 클릭
-    search_box = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "yt-shorts-video-title-view-model.ytShortsVideoTitleViewModelHostClickable")))
-    search_box.click()
-    
-    # 페이지가 로드될 때까지 잠시 대기
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div#title yt-formatted-string")))
-    
-    # BS4로 렌더링된 HTML 파싱
-    soup = BeautifulSoup(driver.page_source, "html.parser")
+            if not title_elem:
+                raise Exception("제목 정보를 찾을 수 없음")
+            
+            title = title_elem.text if title_elem else "[제목 없음]"
 
-    # 1) 제목 추출
-    # div#title 안의 yt-formatted-string 전체 텍스트
-    title_elem = soup.select_one("div#title yt-formatted-string")
-    title = title_elem.get_text(strip=True)
+            search_box = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "yt-shorts-video-title-view-model.ytShortsVideoTitleViewModelHostClickable")))
+            search_box.click()
 
-    # 2) 조회수 추출 (aria-label에 '조회수' 포함)
-    views_elem = soup.find(lambda tag: tag.has_attr("aria-label") and "조회수" in tag["aria-label"])
-    views = int(views_elem["aria-label"].replace("조회수 ", "").replace("회", "").strip().replace(",", ""))
+            # 페이지가 로드될 때까지 잠시 대기
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div#title yt-formatted-string")))
 
-    # 3) 업로드 날짜 추출 (aria-label에 마침표 두 번 이상)
-    date_elem = soup.find(
-        lambda tag: tag.has_attr("aria-label") and tag["aria-label"].count(".") >= 2
-    )
-    try:
-        raw = date_elem["aria-label"]
-        # "2025. 5. 2." -> ["2025", "5", "2"]
-        parts = [p.strip() for p in raw.replace(".", "").split()]
-        year, month, day = parts
+            # BS4로 렌더링된 HTML 파싱
+            soup = BeautifulSoup(driver.page_source, "html.parser")
 
-        # 두 자리 포맷 적용
-        month = month.zfill(2)
-        day   = day.zfill(2)
+            # 조회수 추출
+            views_elem = soup.find(lambda tag: tag.has_attr("aria-label") and "조회수" in tag["aria-label"])
+            views = views_elem["aria-label"].replace("조회수 ", "").replace("회", "").strip() if views_elem else "0"
 
-        upload_date = f"{year}-{month}-{day}"  # -> "2025-05-02"
-    except TypeError as e:
-        print(f"[에러] {url} 처리 중 날짜 문제 발생: {e}")
-        upload_date = datetime.now().strftime("%Y-%m-%d")
-        print("오늘 날짜로 처리")
-    driver.close()
-    return title, views, upload_date
-
-
-def get_channel_info(url):
-    driver = webdriver.Chrome(options=options)
-    wait = WebDriverWait(driver, 10)
-
-    driver.get(url)
-
-    channel_name = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='page-header']/yt-page-header-renderer/yt-page-header-view-model/div/div[1]/div/yt-dynamic-text-view-model/h1/span"))).text
-    subscribers = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='page-header']/yt-page-header-renderer/yt-page-header-view-model/div/div[1]/div/yt-content-metadata-view-model/div[2]/span[1]"))).text
-    subscribers = subscribers.replace("구독자 ", "").replace("명", "")
-
-    if '만' in subscribers:
-        num = float(subscribers.replace('만', ''))
-        subscribers = int(num * 10_000)
-    
-    # '천' 단위
-    elif '천' in subscribers:
-        num = float(subscribers.replace('천', ''))
-        subscribers = int(num * 1_000)
-    
-    # 그 외: 이미 정수 문자열
-    else:
-        subscribers = int(subscribers)
-    
-    driver.close()
-    return channel_name, subscribers
-
-# 채널 내 모든 Shorts 영상 링크 추출
-def get_shorts_urls(url):
-    # 웹 드라이버 초기화
-    driver = webdriver.Chrome(options=options)
-    wait = WebDriverWait(driver, 10)
-
-    try:
-        # 채널 페이지 로드
-        driver.get(url)
-        
-        # 스크롤 일시정지 시간
-        SCROLL_PAUSE_TIME = 2
-
-        # Shorts 영상 링크 저장 집합
-        shorts_urls = set()
-
-        # 스크롤 높이
-        last_height = driver.execute_script("return document.documentElement.scrollHeight")
-
-        while True:
-            # 스크롤 내리기
-            driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
-
-            # 페이지 로드 완료 대기
-            WebDriverWait(driver, SCROLL_PAUSE_TIME).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
+            # 업로드 날짜 추출
+            date_elem = soup.find(
+                lambda tag: tag.has_attr("aria-label") and 
+                (tag["aria-label"].count(".") >= 2 or "시간 전" in tag["aria-label"] or "분 전" in tag["aria-label"]) and 
+                tag.find_parent("factoid-renderer") is not None
             )
 
-            # Shorts 영상 링크 추출 
-            elements = driver.find_elements(By.XPATH, "//*[@id='content']/ytm-shorts-lockup-view-model-v2/ytm-shorts-lockup-view-model/a")
-            for element in elements:
-                shorts_urls.add(element.get_attribute("href"))
+            if not date_elem:
+                raise Exception("날짜 정보를 찾을 수 없음")
 
-            # 스크롤 높이 업데이트
-            new_height = driver.execute_script("return document.documentElement.scrollHeight")
-            print(f"현재 수집된 Shorts 개수: {len(shorts_urls)}")
+            raw = date_elem["aria-label"]
 
-            # 스크롤 높이가 변경되지 않았으면 종료
-            if new_height == last_height:
-                WebDriverWait(driver, SCROLL_PAUSE_TIME).until(
-                    lambda d: d.execute_script("return document.documentElement.scrollHeight") == new_height
-                )
-                break
-            last_height = new_height
+            if "시간 전" in raw:
+                hours = int(raw.replace("시간 전", "").strip())
+                upload_date = (datetime.now() - timedelta(hours=hours)).strftime("%Y-%m-%d")
+            elif "분 전" in raw:
+                minutes = int(raw.replace("분 전", "").strip())
+                upload_date = (datetime.now() - timedelta(minutes=minutes)).strftime("%Y-%m-%d")
+            else:
+                parts = [p.strip() for p in raw.replace(".", "").split()]
+                year, month, day = parts
+                month = month.zfill(2)
+                day = day.zfill(2)
+                upload_date = f"{year}-{month}-{day}"
+
+            return title, views, upload_date
+
+        except Exception as e:
+            print(f"[에러] {url} 시도 {attempt + 1}/{max_retries}: {e}")
+            attempt += 1
+            time.sleep(1)  # 재시도 전 대기
+
+        finally:
+            driver.quit()
+
+    # 모든 시도 실패
+    raise Exception(f"[실패] {url} 모든 재시도 실패")
+
+def get_channel_info(url):
+    driver = get_driver()
+    wait = WebDriverWait(driver, 10)
+
+    try:
+        driver.get(url)
+
+        channel_name = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='page-header']/yt-page-header-renderer/yt-page-header-view-model/div/div[1]/div/yt-dynamic-text-view-model/h1/span"))).text
+        try:
+            subscribers = wait.until(EC.presence_of_element_located((By.XPATH, "//*[@id='page-header']/yt-page-header-renderer/yt-page-header-view-model/div/div[1]/div/yt-content-metadata-view-model/div[2]/span[1]"))).text
+            
+            subscribers = subscribers.replace("구독자 ", "").replace("명", "")
+            if '만' in subscribers:
+                num = float(subscribers.replace('만', ''))
+                subscribers = int(num * 10_000)
+            elif '천' in subscribers:
+                num = float(subscribers.replace('천', ''))
+                subscribers = int(num * 1_000)
+            else:
+                subscribers = int(subscribers)
+        except TimeoutException:
+            subscribers = "정보없음"
+        
+        return channel_name, subscribers
+    finally:
+        driver.quit()
+
+def get_shorts_urls(url):
+    driver = get_driver()
+    wait = WebDriverWait(driver, 10)
+
+    try:
+        driver.get(url)
+        shorts_urls = set()
+        last_urls_count = 0
+        retry_count = 0
+        max_retries = 2
+        max_scroll_retries = 3
+
+        while retry_count < max_retries:
+            scroll_retries = 0
+
+            while scroll_retries < max_scroll_retries:
+                try:
+                    # 요소 재조회
+                    elements = driver.find_elements(By.XPATH, "//*[@id='content']/ytm-shorts-lockup-view-model-v2/ytm-shorts-lockup-view-model/a")
+                    current_urls = set()
+
+                    for elem in elements:
+                        try:
+                            href = elem.get_attribute("href")
+                            if href and "shorts" in href:
+                                current_urls.add(href)
+                        except StaleElementReferenceException:
+                            continue  # 무시하고 다음 요소로
+
+                    shorts_urls.update(current_urls)
+
+                    # 새로 추가된 URL이 없으면 retry 증가
+                    if len(shorts_urls) == last_urls_count:
+                        retry_count += 1
+                    else:
+                        retry_count = 0
+                        last_urls_count = len(shorts_urls)
+                        print(f"현재 수집된 Shorts 개수: {len(shorts_urls)}")
+
+                    # 스크롤 전 높이 저장
+                    last_height = driver.execute_script("return document.documentElement.scrollHeight")
+
+                    # 스크롤 실행
+                    driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+                    time.sleep(1)  # DOM 안정화 대기
+
+                    # 스크롤 완료 여부 확인
+                    def is_scroll_complete(driver):
+                        current_height = driver.execute_script("return document.documentElement.scrollHeight")
+                        scroll_position = driver.execute_script("return window.pageYOffset + window.innerHeight")
+                        return current_height > last_height or scroll_position >= current_height
+
+                    try:
+                        WebDriverWait(driver, 2).until(is_scroll_complete)
+                        break  # 스크롤 완료, 내부 재시도 루프 탈출
+                    except TimeoutException:
+                        print("스크롤이 완료되지 않아 재시도합니다...")
+                        scroll_retries += 1
+
+                except Exception as e:
+                    print(f"알 수 없는 에러 발생: {e}")
+                    scroll_retries += 1
 
         return list(shorts_urls)
+
     finally:
-        driver.close()
+        driver.quit()
 
-# 추출일과 누적집계일 설정
-current_time = datetime.now().strftime("%Y-%m-%d")
 stack_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+current_time = datetime.now().strftime("%y%m%d-%H%M")
+crawl_time = datetime.now().strftime("%Y-%m-%d")
+file_name = f"shorts_info_{current_time}.csv"
 
-# 채널 내 모든 Shorts 영상 정보 추출
 def get_info(urls):
-
-    
-    # 추출 데이터 저장 리스트
-    data = []
-
-    # 각 채널에 대해 반복
     for url in urls:
-        url = f'{url}/shorts/'
-        # 채널 정보 추출
-        try:
-            channel_name, subscribers = get_channel_info(url)
-            
-            # Shorts 영상 링크 추출
-            shorts_urls = get_shorts_urls(url)
-            
-            channel_name, subscribers = get_channel_info(url)
-            shorts_urls = get_shorts_urls(url)
-        except Exception as e:
-            print(f'작업실패 : {e}')
-            raise
+        url = f'{url}/shorts'
+        
+        data = []
+        channel_name, subscribers = get_channel_info(url)
+        shorts_urls = get_shorts_urls(url)
 
-
-        # 각 Shorts 영상에 대해 반복
         for shorts_url in shorts_urls:
             try:
-                # 영상 상세정보 추출
                 title, views, upload_date = get_views_and_upload_date(shorts_url)
                 data.append({
-                    "누적집계일" : stack_time,
-                    "추출일": current_time,
+                    "누적집계일": stack_time,
+                    "추출일": crawl_time,
                     "채널명": channel_name,
                     "영상 제목": title,
                     "영상 링크": shorts_url,
@@ -192,15 +223,14 @@ def get_info(urls):
                     "구독자 수": subscribers
                 })
                 print(f'{title} 완료')
-                
-            except Exception :
+            except Exception:
                 print(f"[에러] {shorts_url} 처리 중 크롤링 문제 발생")
                 for i in range(3):
                     try:
                         title, views, upload_date = get_views_and_upload_date(shorts_url)
                         data.append({
-                            "누적집계일" : stack_time,
-                            "추출일": current_time,
+                            "누적집계일": stack_time,
+                            "추출일": crawl_time,
                             "채널명": channel_name,
                             "영상 제목": title,
                             "영상 링크": shorts_url,

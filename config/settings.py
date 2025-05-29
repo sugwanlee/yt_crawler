@@ -148,9 +148,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MAX_ATTEMPTS = 2
 
+# Redis 설정
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis 브로커 URL
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # 결과 백엔드
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
