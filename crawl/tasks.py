@@ -4,6 +4,8 @@ from .models import Shorts
 from dotenv import load_dotenv
 import requests
 import os
+import time
+from datetime import datetime
 
 load_dotenv()
 
@@ -27,6 +29,8 @@ def crawl_shorts(urls, task_name):
     try:
         # 크롤링 작업 함수
         print(f"작업 시작 : {urls}")
+        start_time = datetime.now()
+        send_slack_message(f"-------------------------\n{start_time.strftime("%y-%m-%d_%H:%M:%S")} : {task_name} 작업 중!")
         data = get_info(urls)
         # 수집된 쇼츠 정보 차례대로 DB에 저장
         for item in data:
@@ -44,7 +48,8 @@ def crawl_shorts(urls, task_name):
             )
         print(f"작업 완료 : {urls}")
         # 성공 슬랙 알람 메시지
-        send_slack_message(f"{task_name} 작업 성공!")
+        end_time = datetime.now()
+        send_slack_message(f"{end_time.strftime('%y-%m-%d_%H:%M:%S')} : {task_name} 작업 성공!\n작업시간 : {str(end_time - start_time)[:-7]}\n-------------------------")
     except Exception as e:
         print(e)
         # 실패 슬랙 알람 메시지
