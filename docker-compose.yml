@@ -19,6 +19,8 @@ services:
 
   db:
     image: postgres:15
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -60,6 +62,7 @@ services:
       - TZ=Asia/Seoul
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DB_HOST=db
     depends_on:
       - web
       - redis
