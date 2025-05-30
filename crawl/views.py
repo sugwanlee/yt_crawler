@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django_celery_beat.models import PeriodicTask, IntervalSchedule
+from django_celery_beat.models import PeriodicTask
 from .tasks import crawl_shorts
 from rest_framework import status
 from .serializers import ShortsSerializer, PeriodicTaskSerializer
@@ -12,7 +12,7 @@ import time
 import json
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 import json
-
+import pytz
 # 매일 오전 9시에 실행되는 크론 스케줄 만들기
 
 
@@ -56,6 +56,7 @@ class CrawlShorts(APIView):
                 day_of_week='*',
                 day_of_month='*',
                 month_of_year='*',
+                timezone=pytz.timezone('Asia/Seoul')
             )
 
             # 작업 등록

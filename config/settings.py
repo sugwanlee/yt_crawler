@@ -49,8 +49,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_celery_beat',
     'django_celery_results',
+    'drf_yasg',
     # local apps
     'crawl',
+    'youtube_crawling',
 ]
 
 MIDDLEWARE = [

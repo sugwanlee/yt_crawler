@@ -204,10 +204,11 @@ crawl_time = datetime.now().strftime("%Y-%m-%d")
 file_name = f"shorts_info_{current_time}.csv"
 
 def get_info(urls):
+    data = []
     for url in urls:
         url = f'{url}/shorts'
         
-        data = []
+        
         channel_name, subscribers = get_channel_info(url)
         shorts_urls = get_shorts_urls(url)
 
@@ -244,20 +245,20 @@ def get_info(urls):
                         break
                     except Exception as e:
                         print(f"[에러] {shorts_url} 재시도 중 문제 발생")
-        for item in data:
-            # 조회수에서 쉼표 제거하고 정수로 변환
-            video_views = int(item["조회수"].replace(',', ''))
-            
-            Shorts.objects.create(
-                stack_date = item["누적집계일"],
-                channel_name = item["채널명"],
-                video_title = item["영상 제목"],
-                video_url = item["영상 링크"],
-                upload_date = item["업로드일"],  # 이미 datetime이면 그대로
-                video_views = video_views,  # 변환된 정수값 사용
-                subscriber_count = item["구독자 수"]
-            )
+    for item in data:
+        # 조회수에서 쉼표 제거하고 정수로 변환
+        video_views = int(item["조회수"].replace(',', ''))
+        
+        Shorts.objects.create(
+            stack_date = item["누적집계일"],
+            channel_name = item["채널명"],
+            video_title = item["영상 제목"],
+            video_url = item["영상 링크"],
+            upload_date = item["업로드일"],  # 이미 datetime이면 그대로
+            video_views = video_views,  # 변환된 정수값 사용
+            subscriber_count = item["구독자 수"]
+        )
         print(f'{channel_name} 완료')
 
-        send_slack_message(f'{channel_name} DB 저장 완료')
+        send_slack_message(f'{channel_name} 수집 완료')
     return data
