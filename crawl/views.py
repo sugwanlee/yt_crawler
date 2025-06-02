@@ -13,6 +13,10 @@ import json
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 import json
 import pytz
+from .swagger import (
+    crawl_shorts_get, crawl_shorts_post, crawl_shorts_delete,
+    shorts_data_get, shorts_data_delete
+)
 # 매일 오전 9시에 실행되는 크론 스케줄 만들기
 
 
@@ -25,7 +29,7 @@ class CrawlShorts(APIView):
     수집하는 항목 : 각 영상 당; 채널명, 영상 제목, 영상 링크, 업로드일, 조회수, 구독자 수
     """
 
-    # 등록된 작업 조회 method
+    @crawl_shorts_get
     def get(self, request):
         try:
             # ORM으로 작업 조회
@@ -39,7 +43,7 @@ class CrawlShorts(APIView):
             # 에러 반환
             return Response({"message": "작업 조회 실패", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    # 작업 등록 method
+    @crawl_shorts_post
     def post(self, request):
         try:
             # body에서 urls 가져오기
@@ -71,7 +75,7 @@ class CrawlShorts(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
-    # 작업 등록 취소 method
+    @crawl_shorts_delete
     def delete(self, request):
         try:
             PeriodicTask.objects.all().delete()
@@ -98,7 +102,7 @@ class TaskDetailStatus(APIView):
 # 쇼츠 정보 api
 class ShortsData(APIView):
 
-    # 모든 쇼츠 정보 조회
+    @shorts_data_get
     def get(self, request):
         try:
             # ORM으로 모든 쇼츠 정보 조회
@@ -112,7 +116,7 @@ class ShortsData(APIView):
             # 에러 반환
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-    # 모든 쇼츠 정보 삭제
+    @shorts_data_delete
     def delete(self, request):
         try:
             # ORM으로 모든 쇼츠 정보 조회
