@@ -5,7 +5,7 @@ import logging, time, datetime, urllib.parse, os
 logger = logging.getLogger(__name__)
 
 @shared_task
-def crawl_channels_task(urls):
+def crawl_channels_task(urls, *args, **kwargs):
 
     today_str = datetime.datetime.now().strftime("%Y%m%d")
 

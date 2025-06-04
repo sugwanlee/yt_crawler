@@ -37,19 +37,27 @@ def create_driver():
     options.add_argument("--disable-notifications")# 알림 비활성화
     options.add_argument('--ignore-certificate-errors')  # 인증서 오류 무시
     options.add_argument('--ignore-ssl-errors')    # SSL 오류 무시
+    options.add_argument('--headless')             # 헤드리스 모드 활성화
+    options.add_argument('--remote-debugging-port=9222')  # 디버깅 포트 설정
+    options.add_argument('--window-size=1920,1080')  # 창 크기 설정
     # User-Agent 설정
     options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36')
     
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    logger.info("🟢 ChromeDriver 실행")
     try:
+        # ARM64 환경에서 ChromeDriver 실행을 위한 설정
+        service = Service()
+        driver = webdriver.Chrome(service=service, options=options)
+        logger.info("🟢 ChromeDriver 실행")
         yield driver
     except Exception as e:
         logger.error(f"❌ WebDriver 예외 발생: {e}", exc_info=True)
         raise
     finally:
-        driver.quit()
-        logger.info("🛑 ChromeDriver 종료")
+        try:
+            driver.quit()
+            logger.info("🛑 ChromeDriver 종료")
+        except:
+            pass
 
 
 # ---------------------- ⬇️ URL 정리하는 함수 추가 ----------------------

@@ -248,7 +248,7 @@ def get_info(urls):
         print(f'{channel_name} 완료')
 
         send_slack_message(f'{channel_name} 수집 완료')
-    send_slack_message(f'{len(data)} 저장 시작')
+    send_slack_message(f'{len(urls)}개 채널, {len(data)}개 쇼츠 저장 시작')
     for item in data:
         # 조회수에서 쉼표 제거하고 정수로 변환
         video_views = int(item["조회수"].replace(',', ''))
@@ -262,5 +262,5 @@ def get_info(urls):
             video_views = video_views,  # 변환된 정수값 사용
             subscriber_count = item["구독자 수"]
         )
-    send_slack_message(f'{len(data)} 저장 완료')
+    send_slack_message(f'쇼츠 {len(data)}개 저장 완료')
     return data

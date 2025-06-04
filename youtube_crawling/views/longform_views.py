@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+import pytz
 
 from django_celery_beat.models import PeriodicTask, CrontabSchedule
 
@@ -10,7 +11,6 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from urllib.parse import urlparse
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -82,6 +82,7 @@ class ChannelCrawlTriggerView(APIView):
             day_of_week='*',
             day_of_month='*',
             month_of_year='*',
+            timezone=pytz.timezone('Asia/Seoul')
         )
 
         task_path = 'youtube_crawling.tasks.crawl_channels_task'
@@ -135,7 +136,7 @@ class YoutubeLongFormCrawlAPIView(APIView):
             return Response({"error": "video_ids를 제공해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         
-        # 크롬 옵션 설정
+            # 크롬 옵션 설정
         options = Options()
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-infobars")
